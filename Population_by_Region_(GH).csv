@@ -1,33 +1,18 @@
-Region,Population (2010 Census),Projected Population
-Ahafo,"484,210","613,049"
-Ashanti,"4,780,380","5,924,498"
-Bono,"922,617","1,168,807"
-Bono East,"904,156","1,133,768"
-Central,"2,201,863","2,605,492"
-Eastern,"2,633,154","3,318,853"
-Greater Accra,"4,010,054","5,055,883"
-North East,"465,005","588,800"
-Northern,"1,544,946","1,948,913"
-Oti,"605,725","759,799"
-Savannah,"469,510","594,712"
-Upper East,"1,046,545","1,302,718"
-Upper West,"702,110","868,479"
-Volta,"1,512,527","1,907,679"
-Western,"1,664,586","2,214,660"
-Western North,"711,435","949,094"
-Ahafo,"484,210","613,049"
-Ashanti,"4,780,380","5,924,498"
-Bono,"922,617","1,168,807"
-Bono East,"904,156","1,133,768"
-Central,"2,201,863","2,605,492"
-Eastern,"2,633,154","3,318,853"
-Greater Accra,"4,010,054","5,055,883"
-North East,"465,005","588,800"
-Northern,"1,544,946","1,948,913"
-Oti,"605,725","759,799"
-Savannah,"469,510","594,712"
-Upper East,"1,046,545","1,302,718"
-Upper West,"702,110","868,479"
-Volta,"1,512,527","1,907,679"
-Western,"1,664,586","2,214,660"
-Western North,"711,435","949,094"
+Region,Census(2010),Census(2021)
+Ahafo (← Brong Ahafo),484210,564668
+Ashanti,4780380,5440463
+Bono (← Brong Ahafo),922617,1208649
+Bono East (← Brong Ahafo),904156,1203400
+Central,2201863,2859821
+Eastern,2633154,2925653
+Greater Accra,4010054,5455692
+North East (← Northern),465005,658946
+Northern,1544946,2310939
+Oti (← Volta),636889,747248
+Savannah (← Northern),469510,653266
+Upper East,1046545,1301226
+Upper West,702110,901502
+Volta,1481363,1659040
+Western,1664586,2060585
+Western North (← Western),711435,880921
+Ghana,24658823,30832019
