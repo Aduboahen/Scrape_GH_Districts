@@ -1,0 +1,363 @@
+---
+title: Scrape Ghana Districts data from https://www.citypopulation.de
+jupyter: python3
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{python}
+#| tags: []
+
+import bs4
+import requests
+from lxml import html
+import pandas as pd
+from pprint import pprint
+import numpy as np
+
+# pd.set_option('display.max_columns', 10) 
+# pd.set_option('display.max_rows', 500) 
+```
+
+```{python}
+#get web data
+
+#link for web data
+url="https://www.citypopulation.de/en/ghana/admin/"
+
+res=requests.get(url)
+res.raise_for_status() #check if link is valid
+```
+
+# BEAUTIFULSOUP
+
+```{python}
+#parse web data using bs4
+
+data=bs4.BeautifulSoup(res.content, 'html.parser')
+```
+
+```{python}
+# get table columns which should be marked with table head tag 'th'
+
+head = data.find_all('th')
+
+columns=[]
+
+for td in head:
+    columns.append(td.text)
+
+columns=columns[:4]
+pprint(columns)
+```
+
+```{python}
+body = data.find_all('tbody')
+
+
+body_rows=[]
+
+for tr in body:
+    td = tr.find_all(['th', 'td'])
+    row = [i.text for i in td]
+    body_rows.append(row)
+body_rows = body_rows[:len(body_rows)-4]
+pprint(len(body_rows)
+```
+
+<h2><b>REGIONAL DATA</b></h2>
+
+```{python}
+#| tags: []
+regions = []
+i = 0
+while i < len(body_rows):
+    regions.append(body_rows[i])
+    i+=2
+
+del regions[-1]
+
+print(regions) 
+```
+
+```{python}
+regcolumns=columns.copy()
+regcolumns.append('Misc')
+```
+
+```{python}
+#| tags: []
+df = pd.DataFrame(regions, columns=regcolumns)
+df = df.drop(df[['Misc', 'Status']],axis=1)
+df.columns = ['Region', 'census_2010', 'census_2021']
+df.replace(',','',regex=True,inplace=True)
+df[['census_2010', 'census_2021']]=df[['census_2010','census_2021']].astype('int64')
+df
+```
+
+## DISTRICTS DATA
+
+```{python}
+district_row = []
+
+i = 1
+while i < len(body_rows):
+    district_row.append(body_rows[i])
+    i+=2
+del district_row[-1]
+print(len(district_row))
+```
+
+```{python}
+# district_row = []
+# 
+# i = 1
+# while i < len(body_rows):
+#     district_row.append(body_rows[i])
+#     i+=2
+# pprint(district_row)
+```
+
+```{python}
+district = []
+status = []
+census_2010 = []
+census_2021 = []
+```
+
+```{python}
+for row in district_row:
+    j=0
+    while j < len(row):
+        district.append(row[j])
+        j+=5
+pprint(len(district))
+```
+
+```{python}
+for row in district_row:
+    j=1
+    while j < len(row):
+        status.append(row[j])
+        j+=5
+pprint(len(status))
+```
+
+```{python}
+for row in district_row:
+    j=2
+    while j < len(row):
+        census_2010.append(row[j])
+        j+=5
+pprint(len(census_2010))
+```
+
+```{python}
+for row in district_row:
+    j=3
+    while j < len(row):
+        census_2021.append(row[j]) 
+        j+=5
+pprint(len(census_2021))
+```
+
+```{python}
+#| error: false
+#| warning: false
+
+
+df=pd.DataFrame(data={'District':district, 'Status':status, 'census_2010':census_2010, 'census_2021':census_2021})
+df.replace(',','',regex=True,inplace=True)
+df[['census_2010', 'census_2021']] = df[['census_2010', 'census_2021']].replace("...", np.NaN)
+df[['census_2010', 'census_2021']]=df[['census_2010','census_2021']].astype('int64')
+pprint(df)
+```
+
+## NATIONAL
+
+```{python}
+#| tags: []
+country=data.find_all('tbody', class_="admin0")
+td=country[0].find_all('td')
+
+country=[]
+for i in range(len(td)-1):
+    if i>=2:
+        country.append(td[i].text)
+#country
+```
+
+```{python}
+df=pd.DataFrame([country], columns=['Total Population (2010 census_2010)', 'census_2021 Population'])
+df
+```
+
+```{python}
+#scrape population distribution data for Ghana
+
+details=data.find_all(class_='addinfo') 
+```
+
+```{python}
+#add distribution table values to 
+
+data1=[]
+data2=[]
+
+for i in range(len(details)):
+    section=details[i].find_all('td')
+    for j in range(len(section)):
+        if j%2==0:
+            data1.append(section[j].text)
+        else:
+            data2.append(section[j].text)
+```
+
+```{python}
+pop_dist={}
+
+#add the column headings and values to dictionary newdata
+for col in data1:
+    for pop in data2:
+        pop_dist[col]=pop
+```
+
+```{python}
+#create dataframe from dictionary
+
+df = pd.DataFrame([pop_dist])
+#df.reset_index(drop=True, inplace=True)
+
+
+#remove , from values
+df=df.replace(',', '',regex=True)
+
+
+#convert all value to interger
+df[list(df.columns)] = df[list(df.columns)].astype('int64')
+df
+```
+
+```{python}
+#df = df.append(newdata, ignore_index=True)
+#df
+```
+
+```{python}
+#create dataframe from dictionary with list values using Series
+
+#columns=['Gender', 'Gender Pop', 'Age Group', 'Age Group Pop', 'Age Distribution', 'Age Distribution Pop' ]
+
+#df2=pd.DataFrame({columns[0]:pd.Series(data1[0:2]), columns[1]:pd.Series(data2[0:2]), columns[2]:pd.Series(data1[2:5]),columns[3]:pd.Series(data2[2:5]), columns[4]:pd.Series(data1[5:]),columns[5]:pd.Series(data2[5:])})
+#df2.fillna('')
+```
+
+```{python}
+#create dataframe from dictionary with list values using from_list
+
+#df3=pd.DataFrame.from_dict({columns[0]:data1[0:2], columns[1]:data2[0:2], columns[2]:data1[2:5], 
+                            #columns[3]:data2[2:5], columns[4]:data1[5:],columns[5]:data2[5:]}, orient='index').T
+#df3.fillna('')
+```
+
+# LXML
+
+```{python}
+data=html.fromstring(res.content)
+```
+
+# REGIONAL DATA
+
+```{python}
+#| tags: []
+#scrape using xpath(get this from inspecting the page and copying the full xpath
+regions=[] 
+cen_pop=[]
+proj_pop=[]
+area_size=[]
+
+r_i=1
+while r_i < 32:
+    
+    region=data.xpath(f'/html/body/article/table/tbody{[r_i]}/tr/td[1]/a/span/text()')
+    census_2010=data.xpath(f'/html/body/article/table/tbody{[r_i]}/tr/td[3]/text()')
+    census_2021_pop=data.xpath(f'/html/body/article/table/tbody{[r_i]}/tr/td[4]/text()')
+    area=data.xpath(f'/html/body/article/table/tbody{[r_i]}/tr[2]/td/p[4]/span/text()')
+    
+
+    
+    regions.append(region[0])
+    cen_pop.append(census_2010[0])
+    proj_pop.append(census_2021_pop[0])
+    area_size.append(area)
+    r_i+=2
+
+pprint(regions)
+```
+
+```{python}
+#create dataframe from data
+
+reg_pop = pd.DataFrame({'Region':regions, 'census_2010':cen_pop, 'census_2021':proj_pop})
+reg_pop=reg_pop.replace(',','', regex=True)
+reg_pop[['census_2010', 'census_2021']]=reg_pop[['census_2010', 'census_2021']].astype('int64')
+reg_pop
+
+reg_pop.to_csv('Population_by_Region_(GH).csv', index=False)
+```
+
+```{python}
+#| tags: []
+#transform the data using melt so both populations can do a grouped graph
+
+#newreg_pop = pd.melt(reg_pop, id_vars='Region', var_name='Type', value_name='Population')
+```
+
+#DISTRICTS DATA
+
+```{python}
+districts=[]
+dist_cen_pop=[]
+dist_proj_pop=[]
+status=[]
+```
+
+```{python}
+districts=[]
+dist_cen_pop=[]
+dist_proj_pop=[]
+status=[]
+
+dbi=2
+while dbi<33:
+    
+    district=data.xpath(f'/html/body/article/table/tbody{[dbi]}/tr/td/a/span/text()')
+    census_2010=data.xpath(f'/html/body/article/table/tbody{[dbi]}/tr/td[3]/text()')
+    proj_pop=data.xpath(f'/html/body/article/table/tbody{[dbi]}/tr/td[4]/text()')
+    dist_type=data.xpath(f'/html/body/article/table/tbody{[dbi]}/tr/td[2]/text()')
+    
+    for dist in district:
+        districts.append(dist)
+    for popn1 in census_2010:
+        dist_cen_pop.append(popn1)
+    for popn2 in proj_pop:
+        dist_proj_pop.append(popn2)
+    for stat in dist_type:
+        status.append(stat)
+    dbi+=2
+```
+
+```{python}
+#| tags: []
+dist_pop=pd.DataFrame(data={'District':districts, 'Status':status, 'census_2010':dist_cen_pop, 'census_2021':dist_proj_pop})
+dist_pop.replace(',','',regex=True,inplace=True)
+dist_pop[['census_2010', 'census_2021']]=dist_pop[['census_2010','census_2021']].astype('int64')
+dist_pop
+dist_pop.to_csv('Population_by_District_(GH).csv', index=False)
+```
+
+```{python}
+country=data.xpath('/html/body/article/table/tbody[33]/tr/td[1]/text()')
+census_2010=data.xpath('/html/body/article/table/tbody[33]/tr/td[3]/text()')
+census_2021=data.xpath('/html/body/article/table/tbody[33]/tr/td[4]/text()')
+```
